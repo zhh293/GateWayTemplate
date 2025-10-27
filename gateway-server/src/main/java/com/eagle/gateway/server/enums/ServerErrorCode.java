@@ -3,12 +3,7 @@ package com.eagle.gateway.server.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/**
- * 网关异常枚举
- * 
- * @author jiangyonghua
- * @date 2019年6月21日
- */
+
 @Getter
 @AllArgsConstructor
 public enum ServerErrorCode {

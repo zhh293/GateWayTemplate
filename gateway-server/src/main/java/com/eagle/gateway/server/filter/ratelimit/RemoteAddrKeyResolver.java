@@ -5,12 +5,7 @@ import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
 
-/**
- * 限流策略
- * 
- * @author jiangyonghua
- * @date 2019年6月3日
- */
+
 public class RemoteAddrKeyResolver implements KeyResolver {
 
 	@Override

@@ -1,0 +1,12 @@
+spring:
+  cloud:
+    gateway:
+      default-filters:
+        - SqlInspectGatewayFilterFactory
+      routes:
+        - id: sg_security
+          uri: lb://sg_security
+          predicates:
+            - Path=/security/**
+          filters:
+            - StripPrefix=1

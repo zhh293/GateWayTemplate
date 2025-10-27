@@ -9,12 +9,7 @@ import com.eagle.gateway.server.enums.ServerExchangeKey;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * 添加会话头过滤器
- * 
- * @author jiangyonghua
- * @date 2019年6月3日
- */
+
 @Slf4j
 @Component
 public class SessionHeaderGateFilterFactory

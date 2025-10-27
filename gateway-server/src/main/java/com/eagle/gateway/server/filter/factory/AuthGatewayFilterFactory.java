@@ -1,9 +1,15 @@
 package com.eagle.gateway.server.filter.factory;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.eagle.gateway.server.domain.LoginUser;
+import com.eagle.gateway.server.domain.RedisCache;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.WebSession;
 
 import com.eagle.gateway.server.enums.ServerErrorCode;
 import com.eagle.gateway.server.enums.ServerExchangeKey;
@@ -11,17 +17,18 @@ import com.eagle.gateway.server.exception.ServerException;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * 认证过滤器
- * 
- * @author jiangyonghua
- * @date 2019年6月3日
- */
+import java.util.Base64;
+import java.util.concurrent.TimeUnit;
+
+
 @Slf4j
 @Component
 public class AuthGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthGatewayFilterFactory.Config> {
 
-	@Override
+	@Autowired
+	private RedisCache redisCache;
+	//session有状态验证
+	/*@Override
 	public GatewayFilter apply(Config config) {
 		return (exchange, chain) -> {
 			log.debug("========进入认证过滤器========");
@@ -46,7 +53,65 @@ public class AuthGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthG
 				throw new ServerException(ServerErrorCode.AUTHENTICATE_FAILED);
 			}
 		};
+	}*/
+	//token无状态认证
+	// AuthGatewayFilterFactory.java
+	@Override
+	public GatewayFilter apply(Config config) {
+		return (exchange, chain) -> {
+			try {
+				// 从请求头获取token
+				String token = extractToken(exchange.getRequest());
+				if (StrUtil.isBlank(token)) {
+					throw new ServerException(ServerErrorCode.AUTHENTICATE_FAILED);
+				}
+
+				// 验证token有效性（可选：解析JWT直接验证，或查询Redis）
+				if (!validateToken(token)) {
+					throw new ServerException(ServerErrorCode.AUTHENTICATE_FAILED);
+				}
+
+				// 从Redis获取用户信息
+				Object cacheObject = redisCache.getCacheObject("login:" + token);
+				LoginUser loginUser = JSONUtil.toBean(JSONUtil.toJsonStr(cacheObject), LoginUser.class);
+				if (loginUser == null) {
+					throw new ServerException(ServerErrorCode.AUTHENTICATE_FAILED);
+				}
+
+				// 将用户信息放入请求头传递给下游服务
+				String userInfo = JSONObject.toJSONString(loginUser);
+				exchange = exchange.mutate()
+						.request(exchange.getRequest().mutate()
+								.header("X-User-Info", Base64.getEncoder().encodeToString(userInfo.getBytes()))
+								.build())
+						.build();
+
+				// 刷新过期时间
+				redisCache.setCacheObject("login:" + token, loginUser, 30, TimeUnit.MINUTES);
+
+				return chain.filter(exchange);
+			} catch (Exception e) {
+				throw new ServerException(ServerErrorCode.AUTHENTICATE_FAILED);
+			}
+		};
 	}
+
+	private boolean validateToken(String token) {
+		if(redisCache.hasKey("login:"+token)){
+			return true;
+		}
+		return false;
+	}
+
+	private String extractToken(ServerHttpRequest request) {
+		String token = request.getHeaders().getFirst("Authorization");
+        if (token != null) {
+            return token.replace("Bearer ", "");
+        }else{
+			return null;
+		}
+    }
+
 
 	public AuthGatewayFilterFactory() {
 		super(Config.class);

@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 
 @Configuration
 @EnableAuthorizationServer
-public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
+public class  AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 
 	private final AuthenticationManager authenticationManager;
 

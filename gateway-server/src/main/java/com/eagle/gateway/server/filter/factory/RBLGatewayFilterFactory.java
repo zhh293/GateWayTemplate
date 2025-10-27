@@ -14,12 +14,7 @@ import com.eagle.gateway.server.exception.ServerException;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * 名单过滤过滤器
- * 
- * @author jiangyonghua
- * @date 2019年6月3日
- */
+
 @Slf4j
 @Component
 public class RBLGatewayFilterFactory extends AbstractGatewayFilterFactory<RBLGatewayFilterFactory.Config> {

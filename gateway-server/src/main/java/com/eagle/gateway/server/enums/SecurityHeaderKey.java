@@ -2,12 +2,7 @@ package com.eagle.gateway.server.enums;
 
 import lombok.AllArgsConstructor;
 
-/**
- * 安全请求头key枚举
- * 
- * @author jiangyonghua
- * @date 2019年6月21日
- */
+
 @AllArgsConstructor
 public enum SecurityHeaderKey {
 
