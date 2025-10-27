@@ -1,16 +1,12 @@
 package com.eagle.gateway.server.util;
 
-import java.util.UUID;
+import cn.hutool.core.lang.UUID;
 
-/**
- * 主键生成器
- * 
- * @author jiangyonghua
- * @date 2019年6月4日
- */
+
 public class IdGenUtil {
 
 	public static String uuid() {
-		return UUID.randomUUID().toString().replaceAll("-", "");
+		//雪花算法
+		return UUID.fastUUID().toString().replace("-", "");
 	}
 }

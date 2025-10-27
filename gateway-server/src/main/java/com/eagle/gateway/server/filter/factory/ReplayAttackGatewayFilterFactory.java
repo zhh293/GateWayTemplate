@@ -18,12 +18,7 @@ import com.google.common.cache.CacheBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * 重放攻击检测过滤器
- * 
- * @author jiangyonghua
- * @date 2019年6月3日
- */
+
 @Slf4j
 @Component
 public class ReplayAttackGatewayFilterFactory

@@ -15,12 +15,7 @@ import org.apache.http.message.BasicNameValuePair;
 
 import com.eagle.gateway.server.constant.SysConst;
 
-/**
- * Http请求
- * 
- * @author jiangyonghua
- * @date 2019年6月4日
- */
+
 public class HttpUtil {
 
 	public static String post(Map<String, String> params, String url) throws Exception {

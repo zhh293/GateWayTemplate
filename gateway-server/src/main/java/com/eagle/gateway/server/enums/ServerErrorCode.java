@@ -26,7 +26,9 @@ public enum ServerErrorCode {
 
 	INVALID_URI_QUERY_PARAM(1009, "URI查询参数不合法"),
 
-	SQL_INJECT_ERROR(1010, "请求数据包含SQL注入风险");
+	SQL_INJECT_ERROR(1010, "请求数据包含SQL注入风险"),
+
+	TOKEN_EXPIRED(1011, "Token已过期");
 
 	private final int code;
 

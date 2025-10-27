@@ -13,12 +13,7 @@ import com.eagle.gateway.server.prop.SqlInjectProperties;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Sql注入检测过滤器
- * 
- * @author jiangyonghua
- * @date 2019年6月21日
- */
+
 @Slf4j
 @Component
 public class SqlInspectGatewayFilterFactory

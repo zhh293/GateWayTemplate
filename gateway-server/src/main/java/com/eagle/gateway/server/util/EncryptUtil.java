@@ -13,6 +13,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import cn.hutool.core.codec.Base64Encoder;
 import com.eagle.gateway.server.constant.SysConst;
 import com.eagle.gateway.server.enums.ServerErrorCode;
 import com.eagle.gateway.server.exception.ServerException;
@@ -21,12 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
-/**
- * 加密工具
- * 
- * @author jiangyonghua
- * @date 2019年6月14日
- */
+
 @SuppressWarnings("restriction")
 @Slf4j
 public class EncryptUtil {
@@ -59,7 +55,7 @@ public class EncryptUtil {
 			cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key.getBytes(SysConst.ENCODING), ENCRY_ALGORITHM),
 					new IvParameterSpec(IV.getBytes(SysConst.ENCODING)));
 			byte[] cipherTextBytes = cipher.doFinal(text.getBytes(SysConst.ENCODING));
-			return new BASE64Encoder().encode(cipherTextBytes);
+			return Base64Encoder.encode(cipherTextBytes);
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | UnsupportedEncodingException
 				| InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
 			throw new ServerException(ServerErrorCode.DATA_DECRYPT_ERROR);
@@ -78,7 +74,7 @@ public class EncryptUtil {
 			Cipher cipher = Cipher.getInstance(CIPHER_MODE);
 			cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key.getBytes(SysConst.ENCODING), ENCRY_ALGORITHM),
 					new IvParameterSpec(IV.getBytes(SysConst.ENCODING)));
-			byte[] textBytes = cipher.doFinal(new BASE64Decoder().decodeBuffer(cipherText));
+			byte[] textBytes = cipher.doFinal(new Base64Decoder().decodeBuffer(cipherText));
 			return new String(textBytes, SysConst.ENCODING);
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
 				| InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException

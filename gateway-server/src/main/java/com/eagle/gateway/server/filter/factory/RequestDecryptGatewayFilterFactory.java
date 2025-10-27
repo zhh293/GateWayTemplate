@@ -40,12 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-/**
- * 请求解密过滤器
- * 
- * @author jiangyonghua
- * @date 2019年6月3日
- */
+
 @Slf4j
 @Component
 public class RequestDecryptGatewayFilterFactory

@@ -4,12 +4,7 @@ import com.eagle.gateway.server.enums.ServerErrorCode;
 
 import lombok.Getter;
 
-/**
- * 网关服务异常
- * 
- * @author jiangyonghua
- * @date 2019年6月3日
- */
+
 @Getter
 public class ServerException extends RuntimeException {
 

@@ -15,12 +15,7 @@ import org.apache.http.util.EntityUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * HTTP 客户端
- * 
- * @author jiangyonghua
- * @date 2019年6月4日
- */
+
 @Slf4j
 public final class HttpClientUtil {
 	private static HttpClientUtil instance = null;

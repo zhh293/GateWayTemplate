@@ -70,7 +70,10 @@ public class AuthGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthG
 				if (!validateToken(token)) {
 					throw new ServerException(ServerErrorCode.AUTHENTICATE_FAILED);
 				}
-
+				//检查token是否过期
+				if (redisCache.getExpire("login:" + token) < 0) {
+					throw new ServerException(ServerErrorCode.TOKEN_EXPIRED);
+				}
 				// 从Redis获取用户信息
 				Object cacheObject = redisCache.getCacheObject("login:" + token);
 				LoginUser loginUser = JSONUtil.toBean(JSONUtil.toJsonStr(cacheObject), LoginUser.class);
