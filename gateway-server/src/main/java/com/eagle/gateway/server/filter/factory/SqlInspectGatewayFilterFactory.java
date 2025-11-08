@@ -31,6 +31,14 @@ public class SqlInspectGatewayFilterFactory extends AbstractGatewayFilterFactory
             ServerHttpRequest request = exchange.getRequest();
             String clientIp = getClientIp(request); // 获取客户端IP（用于日志）
 
+            String path = request.getPath().value();
+
+            // 检查是否在排除路径中（Ant风格匹配）
+            if (config.getExcludePaths().stream().anyMatch(pattern -> 
+                PathMatcher.match(pattern, path)
+            )) {
+                return chain.filter(exchange); // 跳过检测
+            }
             // 1. 检测路径参数
             if (config.isIncludePathParams()) {
                 Map<String, String> pathParams = exchange.getAttribute(ServerWebExchangeUtils.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
@@ -158,3 +166,14 @@ public class SqlInspectGatewayFilterFactory extends AbstractGatewayFilterFactory
         private List<String> excludeParams = new ArrayList<>(); // 排除的参数名
     }
 }
+
+
+/*
+app:
+  sql-inject:
+    regex: >
+      (\b(select|insert|update|delete|drop|truncate|alter|exec|union|create|grant|revoke|declare|fetch|load_file|into|from|where|group by|order by|having|join|like|in|exists|between)\b)|
+      (['";\\/\(\)\[\]\{\}])|
+      (--|#|\/\*.*\*\/)
+
+*/
