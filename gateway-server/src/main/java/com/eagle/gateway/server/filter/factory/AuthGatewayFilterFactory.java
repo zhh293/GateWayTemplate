@@ -60,6 +60,11 @@ public class AuthGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthG
 	public GatewayFilter apply(Config config) {
 		return (exchange, chain) -> {
 			try {
+				// 1. 白名单过滤（逻辑不变）
+            	Object isWhitelistUrlFlag = exchange.getAttribute(ServerExchangeKey.is_whitelist_url.name());
+            	if (null != isWhitelistUrlFlag && Boolean.parseBoolean(isWhitelistUrlFlag.toString())) {
+                	return chain.filter(exchange);
+            	}
 				// 从请求头获取token
 				String token = extractToken(exchange.getRequest());
 				if (StrUtil.isBlank(token)) {
