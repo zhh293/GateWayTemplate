@@ -18,7 +18,6 @@ import com.google.common.cache.CacheBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-
 @Slf4j
 @Component
 public class ReplayAttackGatewayFilterFactory
@@ -40,11 +39,13 @@ public class ReplayAttackGatewayFilterFactory
 			String reqid = request.getHeaders().getFirst(SecurityHeaderKey.REQID.value());
 			String reqtime = request.getHeaders().getFirst(SecurityHeaderKey.REQTIME.value());
 			// 作用于设置了reqid和reqtime的客户端
-			if (StringUtils.isEmpty(reqid) || StringUtils.isEmpty(reqtime) || !NumberUtils.isDigits(reqtime))
+			if (StringUtils.isEmpty(reqid) || StringUtils.isEmpty(reqtime) || !StringUtils.isNumeric(reqtime))
 				throw new ServerException(ServerErrorCode.ILLEGAL_SECURITY_HEADER);
 
-			// 比对是否过期和重复
-			if (checkExpired(Long.valueOf(reqtime), config.expiredTime) || reqidCache.getIfPresent(reqid) != null)
+			long reqTimeMillis = parseReqTimeMillis(reqtime);
+			// 比对是否过期和重复（允许少量时钟偏差）
+			if (checkExpired(reqTimeMillis, config.expiredTime, config.allowedSkewSeconds)
+					|| reqidCache.getIfPresent(reqid) != null)
 				throw new ServerException(ServerErrorCode.REPLAY_ATTACK_ERROR);
 
 			reqidCache.put(reqid, true);
@@ -58,11 +59,23 @@ public class ReplayAttackGatewayFilterFactory
 
 	@Data
 	public static class Config {
+		// 允许的时钟偏差（秒）
+		private int allowedSkewSeconds = 2;
 		private int expiredTime;
 	}
 
-	private boolean checkExpired(long reqtime, int expiredTime) {
-		return System.currentTimeMillis() - reqtime > expiredTime * 1000;
+	private boolean checkExpired(long reqTimeMillis, int expiredTimeSeconds, int allowedSkewSeconds) {
+		long now = System.currentTimeMillis();
+		// 允许客户端时间稍微超前 allowedSkewSeconds
+		return now - reqTimeMillis > (expiredTimeSeconds + allowedSkewSeconds) * 1000L;
 	}
 
+	private long parseReqTimeMillis(String reqtime) {
+		// 13位认为是毫秒，10位认为是秒
+		if (reqtime.length() >= 13) {
+			return Long.parseLong(reqtime);
+		} else {
+			return Long.parseLong(reqtime) * 1000L;
+		}
+	}
 }

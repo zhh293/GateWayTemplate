@@ -40,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-
 @Slf4j
 @Component
 public class RequestDecryptGatewayFilterFactory
@@ -120,13 +119,13 @@ public class RequestDecryptGatewayFilterFactory
 			// 解码请求体
 			if (config.includeBody) {
 				if (!checkCanModifyBody(serverRequest)) {
-					chain.filter(exchange);
+					return chain.filter(exchange);
 				}
 
 				ServerRequest defaultServerRequest = new DefaultServerRequest(exchange);
 				MediaType mediaType = serverRequest.getHeaders().getContentType();
 				Mono<String> modifiedBody = defaultServerRequest.bodyToMono(String.class).flatMap(body -> {
-					if (MediaType.APPLICATION_JSON.isCompatibleWith(mediaType)) {
+					if (mediaType != null && MediaType.APPLICATION_JSON.isCompatibleWith(mediaType)) {
 						@SuppressWarnings("unchecked")
 						Map<String, String> jsonDataMap = JSON.parseObject(body, Map.class);
 						String decryptBody = EncryptUtil.decryptAES(jsonDataMap.get(SysConst.ENCRYPT_DATA_KEY),
@@ -137,7 +136,7 @@ public class RequestDecryptGatewayFilterFactory
 
 						return Mono.just(decryptBody);
 					}
-					if (MediaType.APPLICATION_FORM_URLENCODED.isCompatibleWith(mediaType)) {
+					if (mediaType != null && MediaType.APPLICATION_FORM_URLENCODED.isCompatibleWith(mediaType)) {
 						Map<String, String> formDataMap = new HashMap<>();
 						String[] formDataArry = body.split("&");
 						for (int i = 0; i < formDataArry.length; i++) {
