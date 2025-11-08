@@ -13,9 +13,9 @@ import com.eagle.gateway.server.prop.SqlInjectProperties;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-
 @Component
-public class SqlInspectGatewayFilterFactory extends AbstractGatewayFilterFactory<SqlInspectGatewayFilterFactory.Config> {
+public class SqlInspectGatewayFilterFactory
+        extends AbstractGatewayFilterFactory<SqlInspectGatewayFilterFactory.Config> {
 
     // 注入配置类（非静态，避免并发问题）
     private final SqlInjectProperties sqlInjectProperties;
@@ -34,14 +34,13 @@ public class SqlInspectGatewayFilterFactory extends AbstractGatewayFilterFactory
             String path = request.getPath().value();
 
             // 检查是否在排除路径中（Ant风格匹配）
-            if (config.getExcludePaths().stream().anyMatch(pattern -> 
-                PathMatcher.match(pattern, path)
-            )) {
+            if (config.getExcludePaths().stream().anyMatch(pattern -> PathMatcher.match(pattern, path))) {
                 return chain.filter(exchange); // 跳过检测
             }
             // 1. 检测路径参数
             if (config.isIncludePathParams()) {
-                Map<String, String> pathParams = exchange.getAttribute(ServerWebExchangeUtils.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+                Map<String, String> pathParams = exchange
+                        .getAttribute(ServerWebExchangeUtils.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
                 if (pathParams != null) {
                     for (String value : pathParams.values()) {
                         if (isInject(EncodingUtils.fullDecode(value), clientIp, "path-param")) {
@@ -99,7 +98,8 @@ public class SqlInspectGatewayFilterFactory extends AbstractGatewayFilterFactory
     // 解析不同类型的body，提取所有字段值
     private List<String> parseBody(String bodyData, MediaType contentType) {
         List<String> values = new ArrayList<>();
-        if (contentType == null) return values;
+        if (contentType == null)
+            return values;
 
         if (MediaType.APPLICATION_JSON.isCompatibleWith(contentType)) {
             // 解析JSON（递归提取所有值）
@@ -140,7 +140,8 @@ public class SqlInspectGatewayFilterFactory extends AbstractGatewayFilterFactory
 
     // 检测是否为注入内容（含日志记录）
     private boolean isInject(String content, String clientIp, String source) {
-        if (StringUtils.isEmpty(content)) return false;
+        if (StringUtils.isEmpty(content))
+            return false;
         boolean matched = sqlInjectProperties.match(content);
         if (matched) {
             log.warn("检测到SQL注入尝试: 来源={}, 客户端IP={}, 内容={}", source, clientIp, content);
@@ -157,23 +158,24 @@ public class SqlInspectGatewayFilterFactory extends AbstractGatewayFilterFactory
 
     @Data
     public static class Config {
-        private boolean includePathParams = true;       // 是否检测路径参数
-        private boolean includeQueryParams = true;      // 是否检测Query参数
-        private boolean includeHeaders = false;         // 是否检测请求头
+        private boolean includePathParams = true; // 是否检测路径参数
+        private boolean includeQueryParams = true; // 是否检测Query参数
+        private boolean includeHeaders = false; // 是否检测请求头
         private List<String> headersToCheck = Arrays.asList("User-Agent", "Referer"); // 需要检测的头
-        private boolean includeBody = true;             // 是否检测body
+        private boolean includeBody = true; // 是否检测body
         private List<String> excludePaths = new ArrayList<>(); // 排除的路径（Ant风格）
         private List<String> excludeParams = new ArrayList<>(); // 排除的参数名
     }
 }
 
-
 /*
-app:
-  sql-inject:
-    regex: >
-      (\b(select|insert|update|delete|drop|truncate|alter|exec|union|create|grant|revoke|declare|fetch|load_file|into|from|where|group by|order by|having|join|like|in|exists|between)\b)|
-      (['";\\/\(\)\[\]\{\}])|
-      (--|#|\/\*.*\*\/)
-
-*/
+ * app:
+ * sql-inject:
+ * regex: >
+ * (\b(select|insert|update|delete|drop|truncate|alter|exec|union|create|grant|
+ * revoke|declare|fetch|load_file|into|from|where|group by|order
+ * by|having|join|like|in|exists|between)\b)|
+ * (['";\\/\(\)\[\]\{\}])|
+ * (--|#|\/\*.*\*\/)
+ * 
+ */

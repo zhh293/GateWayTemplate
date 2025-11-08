@@ -1,6 +1,7 @@
 @Slf4j
 @Component
-public class XssProtectGatewayFilterFactory extends AbstractGatewayFilterFactory<XssProtectGatewayFilterFactory.Config> {
+public class XssProtectGatewayFilterFactory
+        extends AbstractGatewayFilterFactory<XssProtectGatewayFilterFactory.Config> {
 
     private final XssProperties xssProperties;
     private final PathMatcher pathMatcher = new AntPathMatcher();
@@ -33,13 +34,15 @@ public class XssProtectGatewayFilterFactory extends AbstractGatewayFilterFactory
 
             // 3.1 处理路径参数（如/user/{id}中的id）
             if (config.isIncludePathParams()) {
-                Map<String, String> pathParams = exchange.getAttribute(ServerWebExchangeUtils.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+                Map<String, String> pathParams = exchange
+                        .getAttribute(ServerWebExchangeUtils.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
                 if (pathParams != null && !pathParams.isEmpty()) {
                     // 路径参数无法直接修改，需记录日志并在后续业务层校验（或通过重写路径实现）
                     for (Map.Entry<String, String> entry : pathParams.entrySet()) {
                         String paramName = entry.getKey();
                         String paramValue = entry.getValue();
-                        if (isExcludeParam(paramName) || paramValue == null) continue;
+                        if (isExcludeParam(paramName) || paramValue == null)
+                            continue;
 
                         if (XssUtils.isMalicious(paramValue)) {
                             log.warn("XSS检测：路径参数[{}={}]含恶意内容，客户端IP={}", paramName, paramValue, clientIp);
@@ -84,7 +87,8 @@ public class XssProtectGatewayFilterFactory extends AbstractGatewayFilterFactory
 
                 for (String headerName : xssProperties.getIncludeHeaders()) {
                     List<String> headerValues = headers.get(headerName);
-                    if (headerValues == null) continue;
+                    if (headerValues == null)
+                        continue;
 
                     List<String> sanitizedValues = headerValues.stream()
                             .map(value -> {
@@ -115,7 +119,8 @@ public class XssProtectGatewayFilterFactory extends AbstractGatewayFilterFactory
     /**
      * 修改请求体（支持JSON/表单）
      */
-    private Mono<Void> modifyRequestBody(ServerWebExchange exchange, ServerHttpRequest request, String clientIp, GatewayFilterChain chain) {
+    private Mono<Void> modifyRequestBody(ServerWebExchange exchange, ServerHttpRequest request, String clientIp,
+            GatewayFilterChain chain) {
         ServerRequest serverRequest = ServerRequest.create(exchange, HandlerStrategies.withDefaults().messageReaders());
         MediaType contentType = request.getHeaders().getContentType();
 
@@ -142,7 +147,8 @@ public class XssProtectGatewayFilterFactory extends AbstractGatewayFilterFactory
                 });
 
         // 用净化后的body替换原请求体
-        BodyInserter<Mono<String>, ReactiveHttpOutputMessage> bodyInserter = BodyInserters.fromPublisher(modifiedBody, String.class);
+        BodyInserter<Mono<String>, ReactiveHttpOutputMessage> bodyInserter = BodyInserters.fromPublisher(modifiedBody,
+                String.class);
         CachedBodyOutputMessage outputMessage = new CachedBodyOutputMessage(exchange, request.getHeaders());
 
         return bodyInserter.insert(outputMessage, new BodyInserterContext())
@@ -157,7 +163,8 @@ public class XssProtectGatewayFilterFactory extends AbstractGatewayFilterFactory
                         public HttpHeaders getHeaders() {
                             HttpHeaders headers = new HttpHeaders();
                             headers.putAll(super.getHeaders());
-                            headers.setContentLength(outputMessage.getBody().map(DataBuffer::readableByteCount).reduce(0L, Long::sum));
+                            headers.setContentLength(
+                                    outputMessage.getBody().map(DataBuffer::readableByteCount).reduce(0L, Long::sum));
                             return headers;
                         }
                     };
@@ -251,7 +258,8 @@ public class XssProtectGatewayFilterFactory extends AbstractGatewayFilterFactory
             // 重新拼接表单数据
             return Mono.just(sanitizedFormData.entrySet().stream()
                     .flatMap(entry -> entry.getValue().stream()
-                            .map(value -> entry.getKey() + "=" + URLEncoder.encode(value, StandardCharsets.UTF_8.name())))
+                            .map(value -> entry.getKey() + "="
+                                    + URLEncoder.encode(value, StandardCharsets.UTF_8.name())))
                     .collect(Collectors.joining("&")));
         } catch (Exception e) {
             log.error("XSS净化表单失败", e);
@@ -262,7 +270,8 @@ public class XssProtectGatewayFilterFactory extends AbstractGatewayFilterFactory
     /**
      * 构建包含净化后查询参数的新请求
      */
-    private ServerHttpRequest buildNewRequestWithQueryParams(ServerHttpRequest request, MultiValueMap<String, String> sanitizedQueryParams) {
+    private ServerHttpRequest buildNewRequestWithQueryParams(ServerHttpRequest request,
+            MultiValueMap<String, String> sanitizedQueryParams) {
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUri(request.getURI());
         uriBuilder.replaceQueryParams(sanitizedQueryParams);
         return request.mutate().uri(uriBuilder.build().toUri()).build();
@@ -280,15 +289,14 @@ public class XssProtectGatewayFilterFactory extends AbstractGatewayFilterFactory
      */
     private boolean canModifyBody(ServerHttpRequest request) {
         HttpMethod method = request.getMethod();
-        if (method == null || !(method.equals(HttpMethod.POST) || method.equals(HttpMethod.PUT) || method.equals(HttpMethod.PATCH))) {
+        if (method == null || !(method.equals(HttpMethod.POST) || method.equals(HttpMethod.PUT)
+                || method.equals(HttpMethod.PATCH))) {
             return false;
         }
 
         MediaType contentType = request.getHeaders().getContentType();
-        return contentType != null && (
-                MediaType.APPLICATION_JSON.isCompatibleWith(contentType) ||
-                MediaType.APPLICATION_FORM_URLENCODED.isCompatibleWith(contentType)
-        );
+        return contentType != null && (MediaType.APPLICATION_JSON.isCompatibleWith(contentType) ||
+                MediaType.APPLICATION_FORM_URLENCODED.isCompatibleWith(contentType));
     }
 
     /**
@@ -299,7 +307,8 @@ public class XssProtectGatewayFilterFactory extends AbstractGatewayFilterFactory
         if (StringUtils.hasText(xForwardedFor)) {
             return xForwardedFor.split(",")[0].trim();
         }
-        return request.getRemoteAddress() != null ? request.getRemoteAddress().getAddress().getHostAddress() : "unknown";
+        return request.getRemoteAddress() != null ? request.getRemoteAddress().getAddress().getHostAddress()
+                : "unknown";
     }
 
     /**
@@ -307,32 +316,30 @@ public class XssProtectGatewayFilterFactory extends AbstractGatewayFilterFactory
      */
     @Data
     public static class Config {
-        private boolean includePathParams = true;    // 检测路径参数
-        private boolean includeQueryParams = true;   // 检测查询参数
-        private boolean includeHeaders = true;       // 检测请求头
-        private boolean includeBody = true;          // 检测请求体
+        private boolean includePathParams = true; // 检测路径参数
+        private boolean includeQueryParams = true; // 检测查询参数
+        private boolean includeHeaders = true; // 检测请求头
+        private boolean includeBody = true; // 检测请求体
     }
 }
 
-
-
 /*
-
-app:
-  xss:
-    enabled: true
-    mode: ESCAPE  # 转义模式
-    exclude-paths:
-      - /static/**
-      - /api/v1/rich-text/save  # 富文本接口
-    exclude-params:
-      - content  # 富文本内容字段
-      - html
-    include-headers:
-      - User-Agent
-      - Referer
-      - Cookie
-    max-scan-length: 1048576  # 1MB
-
-
-*/
+ * 
+ * app:
+ * xss:
+ * enabled: true
+ * mode: ESCAPE # 转义模式
+ * exclude-paths:
+ * - /static/**
+ * - /api/v1/rich-text/save # 富文本接口
+ * exclude-params:
+ * - content # 富文本内容字段
+ * - html
+ * include-headers:
+ * - User-Agent
+ * - Referer
+ * - Cookie
+ * max-scan-length: 1048576 # 1MB
+ * 
+ * 
+ */
